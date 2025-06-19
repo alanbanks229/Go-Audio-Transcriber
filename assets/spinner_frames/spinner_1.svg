@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<svg baseProfile="tiny" height="256px" version="1.2" width="256px"
+     xmlns="http://www.w3.org/2000/svg" xmlns:ev="http://www.w3.org/2001/xml-events"
+     xmlns:xlink="http://www.w3.org/1999/xlink">
+    <g transform="rotate(30,128,128)">
+<g transform="rotate(0.0,128,128)">
+        <rect fill="rgb(0, 106, 220)" height="30" opacity="0.1" rx="2" ry="2" width="8" x="124.0" y="58" />
+    </g>
+    <g transform="rotate(30.0,128,128)">
+        <rect fill="rgb(0, 106, 220)" height="30" opacity="0.1818" rx="2" ry="2" width="8" x="124.0" y="58" />
+    </g>
+    <g transform="rotate(60.0,128,128)">
+        <rect fill="rgb(0, 106, 220)" height="30" opacity="0.2636" rx="2" ry="2" width="8" x="124.0" y="58" />
+    </g>
+    <g transform="rotate(90.0,128,128)">
+        <rect fill="rgb(0, 106, 220)" height="30" opacity="0.3454" rx="2" ry="2" width="8" x="124.0" y="58" />
+    </g>
+    <g transform="rotate(120.0,128,128)">
+        <rect fill="rgb(0, 106, 220)" height="30" opacity="0.4272" rx="2" ry="2" width="8" x="124.0" y="58" />
+    </g>
+    <g transform="rotate(150.0,128,128)">
+        <rect fill="rgb(0, 106, 220)" height="30" opacity="0.5090" rx="2" ry="2" width="8" x="124.0" y="58" />
+    </g>
+    <g transform="rotate(180.0,128,128)">
+        <rect fill="rgb(0, 106, 220)" height="30" opacity="0.5909" rx="2" ry="2" width="8" x="124.0" y="58" />
+    </g>
+    <g transform="rotate(210.0,128,128)">
+        <rect fill="rgb(0, 106, 220)" height="30" opacity="0.6727" rx="2" ry="2" width="8" x="124.0" y="58" />
+    </g>
+    <g transform="rotate(240.0,128,128)">
+        <rect fill="rgb(0, 106, 220)" height="30" opacity="0.7545" rx="2" ry="2" width="8" x="124.0" y="58" />
+    </g>
+    <g transform="rotate(270.0,128,128)">
+        <rect fill="rgb(0, 106, 220)" height="30" opacity="0.8363" rx="2" ry="2" width="8" x="124.0" y="58" />
+    </g>
+    <g transform="rotate(300.0,128,128)">
+        <rect fill="rgb(0, 106, 220)" height="30" opacity="0.9181" rx="2" ry="2" width="8" x="124.0" y="58" />
+    </g>
+    <g transform="rotate(330.0,128,128)">
+        <rect fill="rgb(0, 106, 220)" height="30" opacity="1.0" rx="2" ry="2" width="8" x="124.0" y="58" />
+    </g>
+    </g>
+</svg>

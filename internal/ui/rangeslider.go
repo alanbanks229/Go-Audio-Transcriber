@@ -31,7 +31,19 @@ var (
 )
 
 func (s *RangeSlider) CreateRenderer() fyne.WidgetRenderer {
+	// helper: refer to rangeslider_renderer.go
 	return newRangeSliderRenderer(s)
+}
+
+func (s *RangeSlider) SetBoundsAndValues(min, max, start, end float64) {
+	s.Min = min
+	s.Max = max
+	s.Start = clamp(start, min, max)
+	s.End = clamp(end, min, max)
+
+	if s.renderer != nil {
+		s.Refresh()
+	}
 }
 
 func (s *RangeSlider) Dragged(e *fyne.DragEvent) {

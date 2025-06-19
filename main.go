@@ -24,7 +24,10 @@ import (
 func main() {
 	fyneApp := app.New()
 	fyneApp.Settings().SetTheme(theme.LightTheme())
-	FYNE_WINDOW := fyneApp.NewWindow("Audio Transcription Tool")
+	FYNE_WINDOW := fyneApp.NewWindow("Audio Transcription Tool (Alpha)")
+	FYNE_WINDOW.SetIcon(ui.ResourceIconPng)
+
+	FYNE_WINDOW.SetFixedSize(true)
 	ui.CreateUserInterface(FYNE_WINDOW)
 	FYNE_WINDOW.Show()
 	fyneApp.Run()

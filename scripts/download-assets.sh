@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 ASSETS_DIR="./assets"
 mkdir -p "$ASSETS_DIR"
@@ -7,36 +7,53 @@ mkdir -p "$ASSETS_DIR"
 OS="$(uname -s)"
 ARCH="$(uname -m)"
 
-# yt-dlp
+### -------- yt-dlp -------- ###
 YTDLP_URL="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp"
 if [[ "$OS" == "Darwin" ]]; then
-    cp_cmd="cp"
     YTDLP_URL="${YTDLP_URL}_macos"
-elif [[ "$OS" == "Linux" ]]; then
-    cp_cmd="cp"
-    YTDLP_URL="${YTDLP_URL}"
-else
-    echo "Unsupported OS: $OS"
-    exit 1
 fi
-curl -Lo "$ASSETS_DIR/yt-dlp" "$YTDLP_URL"
+
+echo "⬇️ Downloading yt-dlp..."
+curl -fLo "$ASSETS_DIR/yt-dlp" "$YTDLP_URL"
 chmod +x "$ASSETS_DIR/yt-dlp"
 
-# ffmpeg (macOS/Intel)
+### -------- ffmpeg -------- ###
 if [[ "$OS" == "Darwin" ]]; then
-    FFMPEG_URL="https://evermeet.cx/ffmpeg/ffmpeg.zip"
-    curl -Lo "$ASSETS_DIR/ffmpeg.zip" "$FFMPEG_URL"
-    unzip -o "$ASSETS_DIR/ffmpeg.zip" -d "$ASSETS_DIR"
-    rm "$ASSETS_DIR/ffmpeg.zip"
+    if ! command -v ffmpeg >/dev/null 2>&1; then
+        echo "⚠️  ffmpeg not found. Installing via Homebrew..."
+        if command -v brew >/dev/null 2>&1; then
+            brew install ffmpeg
+        else
+            echo "❌ Homebrew not found. Please install it from https://brew.sh"
+            exit 1
+        fi
+    else
+        echo "✅ ffmpeg already installed"
+    fi
+
+    echo "🔗 Linking ffmpeg into $ASSETS_DIR"
+    ln -sf "$(which ffmpeg)" "$ASSETS_DIR/ffmpeg"
+
 elif [[ "$OS" == "Linux" ]]; then
-    echo "Please install ffmpeg via your package manager (e.g., apt install ffmpeg)"
+    if ! command -v ffmpeg >/dev/null 2>&1; then
+        echo "⚠️  Please install ffmpeg using your package manager (e.g., sudo apt install ffmpeg)"
+        exit 1
+    else
+        echo "✅ ffmpeg already installed"
+    fi
+
+    echo "🔗 Linking ffmpeg into $ASSETS_DIR"
+    ln -sf "$(which ffmpeg)" "$ASSETS_DIR/ffmpeg"
 fi
 
-# whisper-cli binary and model
-WHISPER_URL="https://huggingface.co/ggerganov/whisper.cpp/resolve/main/bin/whisper-${OS,,}-${ARCH}"
+### -------- whisper-cli (build from source) -------- ###
+echo "🧱 Building whisper-cli from source..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+"$SCRIPT_DIR/setup-whisper-cli.sh"
+
+### -------- whisper model -------- ###
 MODEL_URL="https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin"
+echo "⬇️ Downloading Whisper model (ggml-small.en.bin)..."
+curl -fLo "$ASSETS_DIR/ggml-small.en.bin" "$MODEL_URL"
 
-curl -Lo "$ASSETS_DIR/whisper-cli" "$WHISPER_URL"
-chmod +x "$ASSETS_DIR/whisper-cli"
-
-curl -Lo "$ASSETS_DIR/ggml-small.en.bin" "$MODEL_URL"
+echo "✅ All assets downloaded and built into $ASSETS_DIR"

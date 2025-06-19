@@ -142,7 +142,9 @@ func CreateUserInterface(fyneWindow fyne.Window) {
 	))
 
 	// Progress Section
-	progressHeader := widget.NewLabelWithStyle("Transcription Progress", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	spinner := util.NewSpinner()
+	progressLabel := widget.NewLabelWithStyle("Transcription Progress", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	progressRow := container.NewHBox(progressLabel, spinner.Widget())
 	progressBar := widget.NewProgressBar()
 	progressBar.SetValue(0)
 
@@ -161,7 +163,7 @@ func CreateUserInterface(fyneWindow fyne.Window) {
 
 	// Final Progress Section
 	transcriptionProgressSection := util.BorderedContainer(container.NewVBox(
-		progressHeader,
+		progressRow,
 		progressBar,
 		logBoxWithHeight,
 	))
@@ -274,8 +276,8 @@ func CreateUserInterface(fyneWindow fyne.Window) {
 			// Update UI elements on the main goroutine, only if a valid duration (>0) was found
 			if dur > 0 {
 				fyne.Do(func() {
-					// rangeSlider.SetRange(0, dur)
-					// rangeSlider.SetStartEnd(0, dur) // Set full range as default selection
+
+					rangeSlider.SetBoundsAndValues(0, dur, 0, dur)
 					startLbl.SetText("Start: " + util.FormatSec(rangeSlider.Start))
 					endLbl.SetText("End: " + util.FormatSec(rangeSlider.End))
 					// The renderer.Layout() call might still be needed if NewRangeSlider isn't
@@ -293,10 +295,13 @@ func CreateUserInterface(fyneWindow fyne.Window) {
 
 	// main action (remains largely the same, but benefits from mp3 path being available)
 	generateTranscriptBtn.OnTapped = func() {
-		generateTranscriptBtn.Disable()
-		progressBar.SetValue(0) // Reset progress bar
-		logBox.SetText("")      // Clear previous logs
-		appendLog("Starting transcription process...")
+		fyne.Do(func() {
+			spinner.Start()
+			generateTranscriptBtn.Disable()
+			progressBar.SetValue(0)
+			logBox.SetText("")
+			appendLog("Starting transcription process...")
+		})
 
 		go func() {
 			src := strings.TrimSpace(inputEntry.Text)
@@ -354,6 +359,7 @@ func CreateUserInterface(fyneWindow fyne.Window) {
 				}
 				generateTranscriptBtn.Enable()
 				progressBar.SetValue(0) // Reset progress bar
+				spinner.Stop()
 			})
 		}()
 	}

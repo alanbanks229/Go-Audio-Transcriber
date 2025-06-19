@@ -1,8 +1,11 @@
 package util
 
 import (
+	"bytes"
 	"fmt"
+	"image"
 	"image/color"
+	"image/png"
 	"math/rand"
 	"os"
 	"time"
@@ -64,4 +67,11 @@ func HSpacer(width float32) fyne.CanvasObject {
 	r := canvas.NewRectangle(color.Transparent)
 	r.SetMinSize(fyne.NewSize(width, 1))
 	return r
+}
+
+// EncodePNG encodes an image.Image into PNG byte slice for use in Fyne static resources.
+func EncodePNG(img image.Image) []byte {
+	var buf bytes.Buffer
+	_ = png.Encode(&buf, img)
+	return buf.Bytes()
 }

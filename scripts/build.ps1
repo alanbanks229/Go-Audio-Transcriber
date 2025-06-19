@@ -1,6 +1,6 @@
 $AppName = "Go-Audio-Transcriber"
 $OutDir = "./dist"
-$MainFile = "./cmd/main.go"
+$MainFile = "main.go"
 
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 

@@ -9,6 +9,11 @@
 
 /dist/*
 
+/GoAudioTranscriber-*/
+
+# Ignore .whisper.cpp repo
+.whisper.cpp
+
 # Ignore Go build artifacts
 *.exe
 *.out
