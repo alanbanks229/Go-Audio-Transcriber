@@ -16,7 +16,7 @@ func DurationSeconds(filepath string) float64 {
 	// Example using ffprobe to get duration. Adjust command if yours is different.
 	// You might need to make sure ffprobe is installed on the user's system.
 	cmd := exec.Command(
-		"ffprobe",
+		util.BinPath("ffprobe"),
 		"-v", "error",
 		"-show_entries", "format=duration",
 		"-of", "default=noprint_wrappers=1:nokey=1",
@@ -42,7 +42,8 @@ func DurationSeconds(filepath string) float64 {
 // Trim copies sub-range into new file using ffmpeg (copy codec → fast)
 func Trim(src string, start, end float64, dir string) string {
 	out := filepath.Join(dir, "trimmed_"+util.RandString(6)+".mp3")
-	cmd := exec.Command("ffmpeg",
+	cmd := exec.Command(
+		util.BinPath("ffmpeg"),
 		"-y", "-i", src, "-ss", fmt.Sprintf("%f", start),
 		"-to", fmt.Sprintf("%f", end), "-c", "copy", out)
 	_ = cmd.Run()

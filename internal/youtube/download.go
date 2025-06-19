@@ -12,7 +12,10 @@ import (
 // Download downloads audio (mp3) via yt-dlp and returns the local path.
 func Download(url, outDir string, log func(string)) string {
 	out := filepath.Join(outDir, "downloaded_"+util.RandString(6)+".%(ext)s")
-	cmd := exec.Command("yt-dlp", "-x", "--audio-format", "mp3", "-o", out, url)
+	cmd := exec.Command(
+		util.BinPath("yt-dlp"),
+		"-x", "--audio-format", "mp3", "-o", out, url,
+	)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {

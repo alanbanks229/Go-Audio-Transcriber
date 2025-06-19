@@ -15,14 +15,12 @@ import (
 
 // Run uses whisper.cpp to transcribe an mp3 and returns the output .txt path.
 func Run(mp3, dir string, pb *widget.ProgressBar, log func(string)) string {
-	whisperBin := "/home/alanbanks229/whisper.cpp/build/bin/whisper-cli"
-	modelPath := "/home/alanbanks229/whisper.cpp/models/ggml-small.en.bin"
-
 	baseName := "transcript_" + util.RandString(6)
 	outBase := filepath.Join(dir, baseName)
 
-	cmd := exec.Command(whisperBin,
-		"-m", modelPath,
+	cmd := exec.Command(
+		util.BinPath("whisper-cli"),
+		"-m", util.BinPath("ggml-small.en.bin"),
 		"-f", mp3,
 		"-otxt",
 		"-of", outBase,

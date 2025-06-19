@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"fyne.io/fyne/v2" // For fyne.Do() and logging
+	"github.com/alanbanks229/Go-Audio-Transcriber/internal/util"
 )
 
 // VideoInfo struct to unmarshal relevant parts of yt-dlp's JSON output
@@ -20,10 +21,9 @@ type VideoInfo struct {
 // GetDuration fetches the duration of a YouTube video using yt-dlp.
 // It returns the duration in seconds and an error, if any.
 func GetDuration(url string, log func(string)) (float64, error) {
-	ytDlpBin := "yt-dlp" // Assumes yt-dlp is in PATH
 
 	// Command to get video info as JSON, but only fetch 'duration'
-	cmd := exec.Command(ytDlpBin, "--dump-json", "--flat-playlist", "--quiet", "--no-warnings", url)
+	cmd := exec.Command(util.BinPath("yt-dlp"), "--dump-json", "--flat-playlist", "--quiet", "--no-warnings", url)
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {

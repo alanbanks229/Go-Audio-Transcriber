@@ -1,0 +1,14 @@
+# Ignore system-specific binaries
+/assets/yt-dlp*
+/assets/ffmpeg*
+/assets/whisper-cli*
+/assets/ggml-small.en.bin
+/assets/*.bin
+
+/local_dev/*
+
+/dist/*
+
+# Ignore Go build artifacts
+*.exe
+*.out
