@@ -2,13 +2,26 @@
 $AssetsDir = "./assets"
 New-Item -ItemType Directory -Force -Path $AssetsDir | Out-Null
 
-Write-Host "Downloading yt-dlp.exe..."
-Invoke-WebRequest -Uri "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe" -OutFile "$AssetsDir/yt-dlp.exe"
+function DownloadFile {
+    param (
+        [string]$url,
+        [string]$outFile
+    )
+    Write-Host "`nDownloading $outFile..."
+    & curl.exe -L "$url" -o "$outFile"
+}
 
-Write-Host "Downloading ffmpeg zip..."
-Invoke-WebRequest -Uri "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" -OutFile "$AssetsDir/ffmpeg.zip"
-Expand-Archive -Path "$AssetsDir/ffmpeg.zip" -DestinationPath "$AssetsDir" -Force
-Remove-Item "$AssetsDir/ffmpeg.zip"
+# --- yt-dlp ---
+DownloadFile "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe" "$AssetsDir/yt-dlp.exe"
+
+# --- ffmpeg ---
+$ffmpegZip = "$AssetsDir/ffmpeg.zip"
+Write-Host "Next Download takes a while..."
+DownloadFile "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" $ffmpegZip
+
+Write-Host "Extracting ffmpeg..."
+Expand-Archive -Path $ffmpegZip -DestinationPath $AssetsDir -Force
+Remove-Item $ffmpegZip
 
 # Move ffmpeg.exe
 $ffmpegBin = Get-ChildItem -Path $AssetsDir -Recurse -Filter "ffmpeg.exe" | Select-Object -First 1
@@ -22,13 +35,23 @@ if ($ffprobeBin) {
     Move-Item $ffprobeBin.FullName "$AssetsDir/ffprobe.exe" -Force
 }
 
-# Download whisper-cli and model
+# --- Clean up extracted ffmpeg folder ---
+$ffmpegExtractedFolder = Get-ChildItem -Path $AssetsDir -Directory | Where-Object {
+    $_.Name -like "ffmpeg-*-essentials_build"
+} | Select-Object -First 1
+
+if ($ffmpegExtractedFolder) {
+    Remove-Item -Path $ffmpegExtractedFolder.FullName -Recurse -Force
+    Write-Host "🧹 Removed leftover folder: $($ffmpegExtractedFolder.Name)"
+}
+
+# --- whisper-cli setup ---
 try {
-    Write-Host "Downloading whisper-cli.exe..."
-    Invoke-WebRequest -Uri "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/bin/whisper-windows-amd64.exe" -OutFile "$AssetsDir/whisper-cli.exe"
-    Write-Host "Downloading whisper model..."
-    Invoke-WebRequest -Uri "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin" -OutFile "$AssetsDir/ggml-small.en.bin"
+    Write-Host "Setting up whisper-cli from source..."
+    & "./scripts/setup-whisper-cli.ps1"
 }
 catch {
-    Write-Warning "Whisper binaries failed to download (Hugging Face might be temporarily down). Please try again later or download manually."
+    Write-Warning "Whisper binaries failed to download or build. Please try again later or check manually."
 }
+
+Write-Host "If no errors occurred you can now Run/Build the APP! See README."

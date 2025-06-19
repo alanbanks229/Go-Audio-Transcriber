@@ -20,7 +20,7 @@ else
   # use icon.png
   fyne package --source-dir . \
     --os "$OS" \
-    --icon Look_Its_Me_Alan.png \
+    --icon icon.png \
     --name "$APP_NAME" \
     --app-version 0.9.0 \
     --app-build 0

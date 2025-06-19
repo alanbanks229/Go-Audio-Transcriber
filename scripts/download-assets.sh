@@ -56,4 +56,4 @@ MODEL_URL="https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.
 echo "⬇️ Downloading Whisper model (ggml-small.en.bin)..."
 curl -fLo "$ASSETS_DIR/ggml-small.en.bin" "$MODEL_URL"
 
-echo "✅ All assets downloaded and built into $ASSETS_DIR"
+echo "If no errors occurred you can now Run/Build the APP! See README."
