@@ -4,7 +4,7 @@ A cross-platform desktop app built with **Go + Fyne** to convert **YouTube video
 
 ---
 
-## 🚀 Features
+## 🚀 Features/Screenshot
 
 - Clean UI with time-range slider
 - Download & transcribe YouTube audio
@@ -13,6 +13,8 @@ A cross-platform desktop app built with **Go + Fyne** to convert **YouTube video
 - Generates plain `.txt` transcripts
 - Cross-platform: macOS, Linux, Windows
 - Uses [`whisper.cpp`](https://github.com/ggerganov/whisper.cpp) under the hood
+
+![image](https://github.com/user-attachments/assets/dce6d0e7-3119-4922-b740-44bf69217dfa)
 
 ---
 
