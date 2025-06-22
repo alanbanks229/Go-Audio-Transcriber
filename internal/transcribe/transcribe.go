@@ -20,7 +20,7 @@ func Run(mp3, dir string, pb *widget.ProgressBar, log func(string)) string {
 
 	cmd := exec.Command(
 		util.BinPath("whisper-cli"),
-		"-m", util.BinPath("ggml-small.en.bin"),
+		"-m", util.ModelPath("ggml-small.en.bin"),
 		"-f", mp3,
 		"-otxt",
 		"-of", outBase,

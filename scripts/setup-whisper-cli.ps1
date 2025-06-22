@@ -4,56 +4,45 @@ param (
 
 $ErrorActionPreference = "Stop"
 
-$RootDir = Resolve-Path "$PSScriptRoot\.."
-$AssetsDir = "$RootDir\assets"
-$WhisperDir = "$RootDir\.whisper.cpp"
-$WhisperRepo = "https://github.com/ggerganov/whisper.cpp.git"
-$WhisperExePath = "$AssetsDir\whisper-cli.exe"
-
-# Ensure assets dir exists
-New-Item -ItemType Directory -Force -Path $AssetsDir | Out-Null
+$rootDir = Resolve-Path "."
+$assetsDir = "$rootDir\assets"
+$clonedDir = "$rootDir\.whisper.cpp"
+$whisperURL = "https://github.com/ggerganov/whisper.cpp.git"
+$updatedWhisperExecPath = "$assetsDir\binaries\whisper-cli.exe"
 
 # Clone or pull whisper.cpp
 Write-Host "Cloning or updating whisper.cpp..."
-if (-Not (Test-Path $WhisperDir)) {
-    git clone $WhisperRepo $WhisperDir
+if (-Not (Test-Path $clonedDir)) {
+    git clone $whisperURL $clonedDir
+    Set-Location $clonedDir
 } else {
-    Push-Location $WhisperDir
+    Set-Location $clonedDir
     git pull
-    Pop-Location
 }
 
-# Run model download script (Step 2)
-Write-Host "⬇Downloading model ($Model) if needed..."
-$downloadScript = Join-Path $WhisperDir "models\download-ggml-model.sh"
-if (-Not (Test-Path "$AssetsDir\ggml-$Model.bin")) {
-    # Run bash from PowerShell
-    bash $downloadScript $Model
-    # Move model from whisper.cpp/models to assets
-    $sourceModel = Join-Path $WhisperDir "models\ggml-$Model.bin"
-    Copy-Item $sourceModel -Destination "$AssetsDir\ggml-$Model.bin" -Force
-}
-
-# Build whisper-cli with CMake (Step 3)
+# Build whisper-cli with CMake (Step 2)
 Write-Host "Building whisper.cpp with CMake..."
-Push-Location $WhisperDir
+cmake -B build | Out-Null
+cmake --build build --config Release | Out-Null
 
-if (-Not (Test-Path "build")) {
-    New-Item -ItemType Directory -Path "build" | Out-Null
-}
-Set-Location "build"
-
-cmake .. | Out-Null
-cmake --build . --config Release | Out-Null
-
-Pop-Location
-
-# Copy built binary to assets (Step 4)
+# Copy built binary to assets (Step 3)
 Write-Host "Copying whisper-cli.exe to assets..."
-$builtBinary = Get-ChildItem "$WhisperDir\build" -Recurse -Filter "whisper-cli.exe" | Select-Object -First 1
+$builtBinary = Get-ChildItem "$clonedDir\build" -Recurse -Filter "whisper-cli.exe" | Select-Object -First 1
 if ($builtBinary) {
-    Copy-Item $builtBinary.FullName $WhisperExePath -Force
-    Write-Host "whisper-cli.exe is ready: $WhisperExePath"
+    Copy-Item "$clonedDir\build\bin\whisper-cli.exe" $updatedWhisperExecPath -Force
+    Write-Host "whisper-cli.exe is ready: $updatedWhisperExecPath"
 } else {
     Write-Warning "Build completed, but whisper.exe was not found."
+}
+
+# Run model download script (Step 4)
+if (-Not (Test-Path "$assetsDir\models\ggml-$Model.bin")) {
+    $downloadScript = Join-Path $clonedDir "models\download-ggml-model.cmd"
+    # Directly invoke the .cmd script
+    & $downloadScript $Model
+
+    # We are currently located in the cloned Dir.
+    # Move model from clonedDir/models to assets
+    $sourceModel = Join-Path $clonedDir "ggml-$Model.bin"
+    Copy-Item $sourceModel -Destination "$assetsDir\models\ggml-$Model.bin" -Force
 }

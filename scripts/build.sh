@@ -2,36 +2,50 @@
 set -e
 
 APP_NAME="Go-Audio-Transcriber"
-OUT_DIR="./dist"
-MAIN_FILE="main.go"
+BUILD_DIR="$PWD/build"
+ASSETS_DIR="$PWD/assets"
+ICON="$PWD/icon.png"
+MAIN_DIR="$PWD"
 
-mkdir -p "$OUT_DIR"
+mkdir -p "$BUILD_DIR"
 
 OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
 ARCH="$(uname -m)"
 
-echo "Building for: $OS ($ARCH)"
+echo "🔨 Building for: $OS ($ARCH)"
 
 if ! command -v fyne &> /dev/null; then
-  echo "Fyne CLI not found. Falling back to go build..."
-  go build -o "$OUT_DIR/$APP_NAME" "$MAIN_FILE"
-else
-  echo "Using fyne package..."
-  # use icon.png
-  fyne package --source-dir . \
-    --os "$OS" \
-    --icon icon.png \
-    --name "$APP_NAME" \
-    --app-version 0.9.0 \
-    --app-build 0
-
-  if [ "$OS" = "darwin" ]; then
-    # Ensure assets and bin get bundled inside the macOS app package
-    cp -R assets "$APP_NAME.app/Contents/Resources/"
-    mv "$APP_NAME.app" "$OUT_DIR/"
-  else
-    mv "$APP_NAME" "$OUT_DIR/"
-  fi
+  echo "⚠️  Fyne CLI not found. Falling back to 'go build'..."
+  go build -o "$BUILD_DIR/$APP_NAME" "$MAIN_DIR/main.go"
+  exit 0
 fi
 
-echo "✅ Build complete: $OUT_DIR/$APP_NAME"
+# Use Fyne CLI to build from root
+pushd "$MAIN_DIR" > /dev/null
+
+fyne package \
+  --os "$OS" \
+  --icon "$ICON" \
+  --name "$APP_NAME" \
+  --app-version 0.9.0 \
+  --app-build 0
+
+popd > /dev/null
+
+# Handle output format per OS
+if [[ "$OS" == "darwin" ]]; then
+  echo "📁 Copying .app bundle and assets..."
+  cp -R "$ASSETS_DIR" "$APP_NAME.app/Contents/Resources/"
+  mv "$APP_NAME.app" "$BUILD_DIR/"
+
+elif [[ "$OS" == "linux" ]]; then
+  echo "📦 Extracting .tar.xz package to build..."
+  tar -xf "$APP_NAME.tar.xz" -C "$BUILD_DIR"
+  rm -rf "$APP_NAME.tar.xz"
+
+elif [[ "$OS" == "windows_nt" || "$OS" == "mingw"* || "$OS" == "msys"* ]]; then
+  echo "📦 Moving .zip package..."
+  mv "$APP_NAME.zip" "$BUILD_DIR/"
+fi
+
+echo "✅ Build complete! Output is in $BUILD_DIR"

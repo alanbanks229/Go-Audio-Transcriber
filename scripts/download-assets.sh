@@ -1,8 +1,19 @@
 #!/bin/bash
 set -euo pipefail
 
-ASSETS_DIR="./assets"
-mkdir -p "$ASSETS_DIR"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# --- Setup target directories ---
+WHISPER_REPO="$ROOT_DIR/.whisper.cpp"
+BIN_DIR="$ROOT_DIR/assets/binaries"
+MODEL_DIR="$ROOT_DIR/assets/models"
+
+rm -rf $WHISPER_REPO
+rm -rf $BIN_DIR
+rm -rf $MODEL_DIR
+
+mkdir -p "$BIN_DIR"
+mkdir -p "$MODEL_DIR"
 
 OS="$(uname -s)"
 ARCH="$(uname -m)"
@@ -14,8 +25,8 @@ if [[ "$OS" == "Darwin" ]]; then
 fi
 
 echo "⬇️ Downloading yt-dlp..."
-curl -fLo "$ASSETS_DIR/yt-dlp" "$YTDLP_URL"
-chmod +x "$ASSETS_DIR/yt-dlp"
+curl -fLo "$BIN_DIR/yt-dlp" "$YTDLP_URL"
+chmod +x "$BIN_DIR/yt-dlp"
 
 ### -------- ffmpeg -------- ###
 if [[ "$OS" == "Darwin" ]]; then
@@ -31,8 +42,8 @@ if [[ "$OS" == "Darwin" ]]; then
         echo "✅ ffmpeg already installed"
     fi
 
-    echo "🔗 Linking ffmpeg into $ASSETS_DIR"
-    ln -sf "$(which ffmpeg)" "$ASSETS_DIR/ffmpeg"
+    echo "🔗 Linking ffmpeg into $BIN_DIR"
+    ln -sf "$(which ffmpeg)" "$BIN_DIR/ffmpeg"
 
 elif [[ "$OS" == "Linux" ]]; then
     if ! command -v ffmpeg >/dev/null 2>&1; then
@@ -42,18 +53,11 @@ elif [[ "$OS" == "Linux" ]]; then
         echo "✅ ffmpeg already installed"
     fi
 
-    echo "🔗 Linking ffmpeg into $ASSETS_DIR"
-    ln -sf "$(which ffmpeg)" "$ASSETS_DIR/ffmpeg"
+    echo "🔗 Linking ffmpeg into $BIN_DIR"
+    ln -sf "$(which ffmpeg)" "$BIN_DIR/ffmpeg"
 fi
 
 ### -------- whisper-cli (build from source) -------- ###
-echo "🧱 Building whisper-cli from source..."
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-"$SCRIPT_DIR/setup-whisper-cli.sh"
+"$ROOT_DIR/scripts/setup-whisper-cli.sh"
 
-### -------- whisper model -------- ###
-MODEL_URL="https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin"
-echo "⬇️ Downloading Whisper model (ggml-small.en.bin)..."
-curl -fLo "$ASSETS_DIR/ggml-small.en.bin" "$MODEL_URL"
-
-echo "If no errors occurred you can now Run/Build the APP! See README."
+echo "✅ All assets downloaded. You're ready to Run/Build the app!"

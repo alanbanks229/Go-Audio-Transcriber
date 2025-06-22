@@ -1,9 +1,8 @@
 # Ignore system-specific binaries
-/assets/yt-dlp*
-/assets/ffmpeg*
-/assets/whisper-cli*
-/assets/ggml-small.en.bin
-/assets/*.bin
+/assets/binaries*
+/assets/models*
+
+build
 
 /local_dev/*
 
