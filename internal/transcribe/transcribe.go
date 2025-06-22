@@ -2,7 +2,6 @@ package transcribe
 
 import (
 	"bufio" // Import io for MultiReader
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -10,6 +9,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/widget"
+	"github.com/alanbanks229/Go-Audio-Transcriber/internal/execx"
 	"github.com/alanbanks229/Go-Audio-Transcriber/internal/util"
 )
 
@@ -18,7 +18,7 @@ func Run(mp3, dir string, pb *widget.ProgressBar, log func(string)) string {
 	baseName := "transcript_" + util.RandString(6)
 	outBase := filepath.Join(dir, baseName)
 
-	cmd := exec.Command(
+	cmd := execx.Command(
 		util.BinPath("whisper-cli"),
 		"-m", util.ModelPath("ggml-small.en.bin"),
 		"-f", mp3,

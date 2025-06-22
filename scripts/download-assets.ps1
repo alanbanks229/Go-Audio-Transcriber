@@ -61,10 +61,9 @@ try {
     Write-Host "Setting up whisper-cli from source..."
     # Call operator — actually invokes the helper script
     & "$rootDir\scripts\setup-whisper-cli.ps1"
+    Set-Location $rootDir
     Write-Host "All assets downloaded. You can now Build and/or run the app!"
 }
 catch {
     Write-Warning "Whisper CLI setup failed. Please troubleshoot manually."
 }
-
-

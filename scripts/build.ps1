@@ -13,11 +13,19 @@ Write-Host "Building for Windows..."
 
 if (Get-Command "fyne.exe" -ErrorAction SilentlyContinue) {
     Write-Host "Using fyne package..."
-    fyne package -os windows -icon "icon.png" -name $AppName --appVersion "0.9.0" --appBuild "0"
+    $env:GOFLAGS = '-ldflags "-H=windowsgui"'
+    fyne package `
+        -os windows `
+        -icon "icon.png" `
+        -name $AppName `
+        --appVersion "0.9.0" `
+        --appBuild "0"
+    Remove-Item Env:GOFLAGS
     Move-Item "$AppName.exe" "$BuildDir/$AppName.exe" -Force
 } else {
     Write-Host "Fyne CLI not found. Falling back to go build..."
-    go build -o "$BuildDir/$AppName.exe" $MainFile
+    rsrc -manifest manifest.xml
+    go build -ldflags "-H=windowsgui" -o "$BuildDir/$AppName.exe" $MainFile
 }
 
 Write-Host "Build complete: $BuildDir"

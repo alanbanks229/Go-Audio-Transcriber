@@ -5,11 +5,11 @@ import (
 	"bufio" // For reading stderr line by line
 	"encoding/json"
 	"fmt"
-	"io" // For io.ReadAll
-	"os/exec"
+	"io"
 	"strings"
 
-	"fyne.io/fyne/v2" // For fyne.Do() and logging
+	"fyne.io/fyne/v2"
+	"github.com/alanbanks229/Go-Audio-Transcriber/internal/execx"
 	"github.com/alanbanks229/Go-Audio-Transcriber/internal/util"
 )
 
@@ -23,7 +23,7 @@ type VideoInfo struct {
 func GetDuration(url string, log func(string)) (float64, error) {
 
 	// Command to get video info as JSON, but only fetch 'duration'
-	cmd := exec.Command(util.BinPath("yt-dlp"), "--dump-json", "--flat-playlist", "--quiet", "--no-warnings", url)
+	cmd := execx.Command(util.BinPath("yt-dlp"), "--dump-json", "--flat-playlist", "--quiet", "--no-warnings", url)
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {

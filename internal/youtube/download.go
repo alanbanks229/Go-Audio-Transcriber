@@ -6,13 +6,14 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/alanbanks229/Go-Audio-Transcriber/internal/execx"
 	"github.com/alanbanks229/Go-Audio-Transcriber/internal/util"
 )
 
 // Download downloads audio (mp3) via yt-dlp and returns the local path.
 func Download(url, outDir string, log func(string)) string {
 	out := filepath.Join(outDir, "downloaded_"+util.RandString(6)+".%(ext)s")
-	cmd := exec.Command(
+	cmd := execx.Command(
 		util.BinPath("yt-dlp"),
 		"-x", "--audio-format", "mp3", "-o", out, url,
 	)
