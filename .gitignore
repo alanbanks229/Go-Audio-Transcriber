@@ -15,5 +15,6 @@
 .whisper.cpp
 
 # Ignore Go build artifacts
+/GoAudioTranscriber
 *.exe
 *.out

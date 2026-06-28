@@ -22,7 +22,7 @@ import (
 )
 
 func main() {
-	fyneApp := app.New()
+	fyneApp := app.NewWithID("com.alanbanks.goaudiotranscriber")
 	fyneApp.Settings().SetTheme(theme.LightTheme())
 	FYNE_WINDOW := fyneApp.NewWindow("Audio Transcription Tool (Alpha-0.9.0)")
 	FYNE_WINDOW.SetIcon(ui.AppIconPNG)

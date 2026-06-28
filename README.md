@@ -99,7 +99,7 @@ chmod +x scripts/download-assets.sh
 #### macOS/Linux
 
 ```bash
-go build -o GoAudioTranscriber ./cmd
+go build -o GoAudioTranscriber
 ./GoAudioTranscriber
 ```
 

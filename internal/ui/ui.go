@@ -50,7 +50,7 @@ func CreateUserInterface(fyneWindow fyne.Window) {
 					inputEntry.SetText(r.URI().Path())
 				}
 			}, fyneWindow)
-			fd.SetFilter(storage.NewExtensionFileFilter([]string{".mp3"}))
+			fd.SetFilter(storage.NewExtensionFileFilter([]string{".mp3", ".m4a"}))
 			fd.Show()
 		},
 	)
@@ -149,16 +149,18 @@ func CreateUserInterface(fyneWindow fyne.Window) {
 	progressBar.SetValue(0)
 
 	// Multi-line Transcription Section
-	logBox := widget.NewMultiLineEntry()
-	logBox.SetMinRowsVisible(8)
+	logText := ""
+	logBox := widget.NewLabel("Transcription will appear here...")
 	logBox.Wrapping = fyne.TextWrapWord
-	logBox.SetPlaceHolder("Transcription will appear here...")
+	logBox.Selectable = true
 
 	// Light background behind log box
 	logBoxBG := canvas.NewRectangle(color.NRGBA{R: 245, G: 245, B: 245, A: 255}) // soft light gray
 
 	// Set fixed height using a layout
-	logBoxContainer := container.NewMax(logBoxBG, logBox)
+	logScroll := container.NewVScroll(logBox)
+	logScroll.SetMinSize(fyne.NewSize(760, 180))
+	logBoxContainer := container.NewMax(logBoxBG, logScroll)
 	logBoxWithHeight := container.NewVBox(logBoxContainer)
 
 	// Final Progress Section
@@ -198,9 +200,36 @@ func CreateUserInterface(fyneWindow fyne.Window) {
 	}
 
 	// appendLog function for unified logging
+	appendLogOnUI := func(s string) {
+		offset := logScroll.Offset
+		contentHeight := logScroll.Content.MinSize().Height
+		viewportHeight := logScroll.Size().Height
+		wasAtBottom := offset.Y >= contentHeight-viewportHeight-8
+
+		logText += s + "\n"
+		logBox.SetText(logText)
+
+		if wasAtBottom {
+			logScroll.ScrollToBottom()
+		} else {
+			logScroll.ScrollToOffset(offset)
+		}
+	}
 	appendLog := func(s string) {
 		fyne.Do(func() {
-			logBox.SetText(logBox.Text + s + "\n")
+			appendLogOnUI(s)
+		})
+	}
+
+	resetLogOnUI := func() {
+		logText = ""
+		logBox.SetText("Transcription will appear here...")
+		logScroll.ScrollToTop()
+	}
+	resetLogAndAppend := func(s string) {
+		fyne.Do(func() {
+			resetLogOnUI()
+			appendLogOnUI(s)
 		})
 	}
 
@@ -234,37 +263,28 @@ func CreateUserInterface(fyneWindow fyne.Window) {
 			src := inputEntry.Text // Get the source URL/path
 
 			if youtubeRX.MatchString(src) {
-				fyne.Do(func() {
-					logBox.SetText("")
-					appendLog("Probing YouTube video for duration (this may take a moment)...")
-				})
+				resetLogAndAppend("Probing YouTube video for duration (this may take a moment)...")
 				// Call the new GetDuration function from the youtube package
 				dur, err = youtube.GetDuration(src, appendLog)
 				if err != nil {
 					fyne.Do(func() {
-						appendLog("Error getting YouTube duration: " + err.Error())
+						appendLogOnUI("Error getting YouTube duration: " + err.Error())
 						dialog.ShowError(fmt.Errorf("could not get YouTube duration: %w", err), fyneWindow)
 					})
 					return // Stop if we can't get duration
 				}
-				fyne.Do(func() {
-					appendLog(fmt.Sprintf("YouTube video duration: %s", util.FormatSec(dur)))
-				})
+				appendLog(fmt.Sprintf("YouTube video duration: %s", util.FormatSec(dur)))
 			} else if util.FileExists(src) {
-				fyne.Do(func() {
-					appendLog("Probing local MP3 for duration...")
-				})
+				resetLogAndAppend("Probing local MP3 for duration...")
 				dur = audio.DurationSeconds(src)
 				if dur == 0 {
 					fyne.Do(func() {
-						appendLog("Error: Could not get duration for local MP3. Is it a valid audio file?")
+						appendLogOnUI("Error: Could not get duration for local MP3. Is it a valid audio file?")
 						dialog.ShowError(fmt.Errorf("could not get duration for local MP3"), fyneWindow)
 					})
 					return // Stop if duration is 0
 				}
-				fyne.Do(func() {
-					appendLog(fmt.Sprintf("Local MP3 duration: %s", util.FormatSec(dur)))
-				})
+				appendLog(fmt.Sprintf("Local MP3 duration: %s", util.FormatSec(dur)))
 			} else {
 				// Input is neither a valid YouTube link nor an existing file.
 				// The validateInputField() already handled disabling the button.
@@ -299,8 +319,8 @@ func CreateUserInterface(fyneWindow fyne.Window) {
 			spinner.Start()
 			generateTranscriptBtn.Disable()
 			progressBar.SetValue(0)
-			logBox.SetText("")
-			appendLog("Starting transcription process...")
+			resetLogOnUI()
+			appendLogOnUI("Starting transcription process...")
 		})
 
 		go func() {

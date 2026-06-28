@@ -1,5 +1,8 @@
 # PowerShell Setup Script for Windows
-$AssetsDir = "./assets"
+$ErrorActionPreference = "Stop"
+
+$ProjectRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
+$AssetsDir = Join-Path $ProjectRoot "assets"
 New-Item -ItemType Directory -Force -Path $AssetsDir | Out-Null
 
 function DownloadFile {
@@ -8,11 +11,14 @@ function DownloadFile {
         [string]$outFile
     )
     Write-Host "`nDownloading $outFile..."
-    & curl.exe -L "$url" -o "$outFile"
+    & curl.exe -fL "$url" -o "$outFile"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to download $url"
+    }
 }
 
 # --- yt-dlp ---
-DownloadFile "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe" "$AssetsDir/yt-dlp.exe"
+& "$PSScriptRoot/update-ytdlp-windows.ps1"
 
 # --- ffmpeg ---
 $ffmpegZip = "$AssetsDir/ffmpeg.zip"
@@ -48,7 +54,7 @@ if ($ffmpegExtractedFolder) {
 # --- whisper-cli setup ---
 try {
     Write-Host "Setting up whisper-cli from source..."
-    & "./scripts/setup-whisper-cli.ps1"
+    & (Join-Path $PSScriptRoot "setup-whisper-cli.ps1")
 }
 catch {
     Write-Warning "Whisper binaries failed to download or build. Please try again later or check manually."

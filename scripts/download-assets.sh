@@ -6,16 +6,18 @@ mkdir -p "$ASSETS_DIR"
 
 OS="$(uname -s)"
 ARCH="$(uname -m)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 ### -------- yt-dlp -------- ###
-YTDLP_URL="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp"
 if [[ "$OS" == "Darwin" ]]; then
-    YTDLP_URL="${YTDLP_URL}_macos"
+    "$SCRIPT_DIR/update-ytdlp-macos.sh"
+else
+    YTDLP_URL="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp"
+    echo "⬇️ Downloading yt-dlp..."
+    curl -fLo "$ASSETS_DIR/yt-dlp" "$YTDLP_URL"
+    chmod +x "$ASSETS_DIR/yt-dlp"
+    echo "✅ yt-dlp updated: $("$ASSETS_DIR/yt-dlp" --version)"
 fi
-
-echo "⬇️ Downloading yt-dlp..."
-curl -fLo "$ASSETS_DIR/yt-dlp" "$YTDLP_URL"
-chmod +x "$ASSETS_DIR/yt-dlp"
 
 ### -------- ffmpeg -------- ###
 if [[ "$OS" == "Darwin" ]]; then
@@ -48,7 +50,6 @@ fi
 
 ### -------- whisper-cli (build from source) -------- ###
 echo "🧱 Building whisper-cli from source..."
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 "$SCRIPT_DIR/setup-whisper-cli.sh"
 
 ### -------- whisper model -------- ###
