@@ -83,6 +83,9 @@ func CreateUserInterface(fyneWindow fyne.Window) {
 	outputHeader := widget.NewLabelWithStyle("Output Directory", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	outputEntry := widget.NewEntry()
 	outputEntry.SetPlaceHolder(downloads)
+	outputEntry.OnChanged = func(text string) {
+		_ = outPath.Set(strings.Trim(strings.TrimSpace(text), `"`))
+	}
 	selectOutputBtn := widget.NewButton("                 Select Output Folder                 ", func() {
 		dialog.NewFolderOpen(func(uri fyne.ListableURI, _ error) {
 			if uri != nil {
@@ -177,7 +180,7 @@ func CreateUserInterface(fyneWindow fyne.Window) {
 	generateTranscriptBtnContainer := util.BorderedContainer(generateTranscriptBtn)
 
 	validateInputField := func() {
-		txt := strings.TrimSpace(inputEntry.Text)
+		txt := strings.Trim(strings.TrimSpace(inputEntry.Text), `"`)
 		if txt == "" {
 			generateTranscriptBtn.Disable()
 			// Reset importance when disabled
@@ -237,7 +240,7 @@ func CreateUserInterface(fyneWindow fyne.Window) {
 	inputEntry.OnChanged = func(text string) {
 		validateInputField() // Re-validate button state based on new input
 
-		src := strings.TrimSpace(text)
+		src := strings.Trim(strings.TrimSpace(text), `"`)
 		if src == "" {
 			// If input is empty, reset range slider to default and return
 			fyne.Do(func() {
@@ -260,7 +263,6 @@ func CreateUserInterface(fyneWindow fyne.Window) {
 
 			var dur float64
 			var err error
-			src := inputEntry.Text // Get the source URL/path
 
 			if youtubeRX.MatchString(src) {
 				resetLogAndAppend("Probing YouTube video for duration (this may take a moment)...")
@@ -315,6 +317,9 @@ func CreateUserInterface(fyneWindow fyne.Window) {
 
 	// main action (remains largely the same, but benefits from mp3 path being available)
 	generateTranscriptBtn.OnTapped = func() {
+		src := strings.Trim(strings.TrimSpace(inputEntry.Text), `"`)
+		targetDir, _ := outPath.Get()
+		start, end := rangeSlider.Start, rangeSlider.End
 		fyne.Do(func() {
 			spinner.Start()
 			generateTranscriptBtn.Disable()
@@ -324,8 +329,10 @@ func CreateUserInterface(fyneWindow fyne.Window) {
 		})
 
 		go func() {
-			src := strings.TrimSpace(inputEntry.Text)
-			targetDir, _ := outPath.Get() // outPath should be safely retrieved here
+			defer fyne.Do(func() {
+				spinner.Stop()
+				generateTranscriptBtn.Enable()
+			})
 
 			var mp3Path string // Variable to hold the path to the local MP3 file
 
@@ -357,7 +364,7 @@ func CreateUserInterface(fyneWindow fyne.Window) {
 			}
 
 			appendLog("Trimming audio…")
-			trimmed := audio.Trim(mp3Path, rangeSlider.Start, rangeSlider.End, targetDir)
+			trimmed := audio.Trim(mp3Path, start, end, targetDir)
 			if trimmed == "" {
 				fyne.Do(func() {
 					dialog.ShowError(fmt.Errorf("failed to trim audio"), fyneWindow)
@@ -379,7 +386,6 @@ func CreateUserInterface(fyneWindow fyne.Window) {
 				}
 				generateTranscriptBtn.Enable()
 				progressBar.SetValue(0) // Reset progress bar
-				spinner.Stop()
 			})
 		}()
 	}

@@ -1,3 +1,9 @@
+param (
+    [ValidateSet("Auto", "CPU", "CUDA")]
+    [string]$Backend = "Auto",
+    [string]$CudaArchitectures = "native"
+)
+
 # PowerShell Setup Script for Windows
 $ErrorActionPreference = "Stop"
 
@@ -26,38 +32,33 @@ Write-Host "Next Download takes a while..."
 DownloadFile "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" $ffmpegZip
 
 Write-Host "Extracting ffmpeg..."
-Expand-Archive -Path $ffmpegZip -DestinationPath $AssetsDir -Force
-Remove-Item $ffmpegZip
-
-# Move ffmpeg.exe
-$ffmpegBin = Get-ChildItem -Path $AssetsDir -Recurse -Filter "ffmpeg.exe" | Select-Object -First 1
-if ($ffmpegBin) {
-    Move-Item $ffmpegBin.FullName "$AssetsDir/ffmpeg.exe" -Force
-}
-
-# Move ffprobe.exe (needed for duration analysis)
-$ffprobeBin = Get-ChildItem -Path $AssetsDir -Recurse -Filter "ffprobe.exe" | Select-Object -First 1
-if ($ffprobeBin) {
-    Move-Item $ffprobeBin.FullName "$AssetsDir/ffprobe.exe" -Force
-}
-
-# --- Clean up extracted ffmpeg folder ---
-$ffmpegExtractedFolder = Get-ChildItem -Path $AssetsDir -Directory | Where-Object {
-    $_.Name -like "ffmpeg-*-essentials_build"
-} | Select-Object -First 1
-
-if ($ffmpegExtractedFolder) {
-    Remove-Item -Path $ffmpegExtractedFolder.FullName -Recurse -Force
-    Write-Host "🧹 Removed leftover folder: $($ffmpegExtractedFolder.Name)"
+$ffmpegExtractDir = Join-Path $AssetsDir ("ffmpeg-extract-" + [guid]::NewGuid().ToString("N"))
+New-Item -ItemType Directory -Path $ffmpegExtractDir | Out-Null
+try {
+    Expand-Archive -LiteralPath $ffmpegZip -DestinationPath $ffmpegExtractDir
+    # Search only this archive, never existing executables from a previous run.
+    foreach ($name in @("ffmpeg.exe", "ffprobe.exe")) {
+        $binary = Get-ChildItem -LiteralPath $ffmpegExtractDir -Recurse -Filter $name -File | Select-Object -First 1
+        if (-not $binary) { throw "$name was not found in the downloaded archive." }
+        Move-Item -LiteralPath $binary.FullName -Destination (Join-Path $AssetsDir $name) -Force
+    }
+    Remove-Item -LiteralPath $ffmpegZip
+} finally {
+    $resolvedExtractDir = (Resolve-Path -LiteralPath $ffmpegExtractDir).Path
+    $expectedPrefix = (Resolve-Path -LiteralPath $AssetsDir).Path + "\ffmpeg-extract-"
+    if (-not $resolvedExtractDir.StartsWith($expectedPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to clean unexpected extraction path: $resolvedExtractDir"
+    }
+    Remove-Item -LiteralPath $resolvedExtractDir -Recurse -Force
 }
 
 # --- whisper-cli setup ---
 try {
     Write-Host "Setting up whisper-cli from source..."
-    & (Join-Path $PSScriptRoot "setup-whisper-cli.ps1")
+    & (Join-Path $PSScriptRoot "setup-whisper-cli.ps1") -Backend $Backend -CudaArchitectures $CudaArchitectures
 }
 catch {
-    Write-Warning "Whisper binaries failed to download or build. Please try again later or check manually."
+    throw "Whisper setup failed: $($_.Exception.Message)"
 }
 
-Write-Host "If no errors occurred you can now Run/Build the APP! See README."
+Write-Host "Assets are ready. Build and run the app using the README instructions."

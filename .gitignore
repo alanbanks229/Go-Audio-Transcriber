@@ -4,6 +4,8 @@
 /assets/whisper-cli*
 /assets/ggml-small.en.bin
 /assets/*.bin
+/assets/*.dll
+/assets/*.partial
 
 /local_dev/*
 
@@ -17,4 +19,5 @@
 # Ignore Go build artifacts
 /GoAudioTranscriber
 *.exe
+*.exe~
 *.out

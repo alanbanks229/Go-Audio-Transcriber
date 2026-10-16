@@ -46,6 +46,9 @@ func Trim(src string, start, end float64, dir string) string {
 		util.BinPath("ffmpeg"),
 		"-y", "-i", src, "-ss", fmt.Sprintf("%f", start),
 		"-to", fmt.Sprintf("%f", end), "-c", "copy", out)
-	_ = cmd.Run()
+	if output, err := cmd.CombinedOutput(); err != nil {
+		fmt.Printf("Error trimming audio: %v\n%s\n", err, output)
+		return ""
+	}
 	return out
 }

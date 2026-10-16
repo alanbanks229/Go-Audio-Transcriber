@@ -1,24 +1,29 @@
 package util
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
-// BinPath returns a usable path to a binary in ./assets, falling back to system-installed binary.
+// BinPath resolves executables only. Use ResolveAssetPath for model/data files.
+// Missing tools are returned as paths so callers can report command errors
+// without terminating the GUI.
 func BinPath(name string) string {
 	// Add .exe for Windows
 	binName := name
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == "windows" && !strings.EqualFold(filepath.Ext(name), ".exe") {
 		binName += ".exe"
 	}
 
 	// Check ./assets/{name}
-	assetsPath := filepath.Join("assets", binName)
-	if _, err := os.Stat(assetsPath); err == nil {
+	assetsPath := ResolveAssetPath(binName)
+	if absolute, err := filepath.Abs(assetsPath); err == nil {
+		assetsPath = absolute
+	}
+	if info, err := os.Stat(assetsPath); err == nil && !info.IsDir() {
 		return assetsPath
 	}
 
@@ -27,9 +32,5 @@ func BinPath(name string) string {
 		return fullPath
 	}
 
-	// Not found
-	fmt.Fprintf(os.Stderr, "Missing required binary: %s\n", binName)
-	fmt.Fprintln(os.Stderr, "Please run: scripts/download-assets.(sh|ps1) or install via Homebrew.")
-	os.Exit(1)
-	return "" // unreachable
+	return assetsPath
 }

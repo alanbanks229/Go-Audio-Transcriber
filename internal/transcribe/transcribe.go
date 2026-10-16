@@ -2,11 +2,14 @@ package transcribe
 
 import (
 	"bufio" // Import io for MultiReader
+	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/widget"
@@ -15,12 +18,18 @@ import (
 
 // Run uses whisper.cpp to transcribe an mp3 and returns the output .txt path.
 func Run(mp3, dir string, pb *widget.ProgressBar, log func(string)) string {
+	modelPath := util.ResolveAssetPath("ggml-small.en.bin")
+	if info, err := os.Stat(modelPath); err != nil || info.IsDir() {
+		log(fmt.Sprintf("Error: Whisper model is missing or inaccessible: %s. Run .\\scripts\\setup-whisper-cli.ps1 to install it.", modelPath))
+		return ""
+	}
+
 	baseName := "transcript_" + util.RandString(6)
 	outBase := filepath.Join(dir, baseName)
 
 	cmd := exec.Command(
 		util.BinPath("whisper-cli"),
-		"-m", util.BinPath("ggml-small.en.bin"),
+		"-m", modelPath,
 		"-f", mp3,
 		"-otxt",
 		"-of", outBase,
@@ -56,7 +65,10 @@ func Run(mp3, dir string, pb *widget.ProgressBar, log func(string)) string {
 	progressRegex := regexp.MustCompile(`progress = (\s*)(\d+)%`) // Added \s* for optional space
 
 	// --- Goroutine for reading stderr (progress updates and diagnostic logs) ---
+	var readers sync.WaitGroup
+	readers.Add(2)
 	go func() {
+		defer readers.Done()
 		scanner := bufio.NewScanner(stderrPipe)
 		for scanner.Scan() {
 			line := scanner.Text()
@@ -73,7 +85,7 @@ func Run(mp3, dir string, pb *widget.ProgressBar, log func(string)) string {
 					// Log other stderr output for debugging purposes, but consider filtering
 					// For example, you might only want to log lines that indicate errors or important warnings.
 					// If you want minimal logs, you could completely remove this 'else' block for general stderr.
-					if strings.Contains(line, "error") || strings.Contains(line, "fail") || strings.Contains(line, "warning") {
+					if strings.Contains(line, "error") || strings.Contains(line, "fail") || strings.Contains(line, "warning") || strings.Contains(line, "CUDA") || strings.Contains(line, "using device") {
 						log("Whisper.cpp (stderr): " + strings.TrimSpace(line))
 					}
 					// Otherwise, if it's just informational, don't log it to the user.
@@ -89,6 +101,7 @@ func Run(mp3, dir string, pb *widget.ProgressBar, log func(string)) string {
 
 	// --- Goroutine for reading stdout (transcription output) ---
 	go func() {
+		defer readers.Done()
 		scanner := bufio.NewScanner(stdoutPipe)
 		for scanner.Scan() {
 			line := scanner.Text()
@@ -107,13 +120,14 @@ func Run(mp3, dir string, pb *widget.ProgressBar, log func(string)) string {
 		}
 	}()
 
-	// Wait for the command to finish
+	// Drain both pipes before Wait closes them.
+	readers.Wait()
 	err = cmd.Wait()
 	if err != nil {
 		fyne.Do(func() {
 			log("Error: whisper.cpp command finished with error: " + err.Error())
 		})
-		// Depending on your error handling, you might return early here
+		return ""
 	}
 
 	fyne.Do(func() {
